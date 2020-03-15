@@ -142,7 +142,7 @@ async function updateExistingTransactions(budgetId: string, transactions: Ynab.U
   return data
 }
 
-; (async (): Promise<void> => {
+async function starlingToYnab (): Promise<void> {
   try {
     console.log(START_DATE)
     const account = await getPrimaryAccount()
@@ -162,5 +162,6 @@ async function updateExistingTransactions(budgetId: string, transactions: Ynab.U
   } catch (err) {
     console.error(err)
   }
+}
 
-})()
+export { starlingToYnab }
