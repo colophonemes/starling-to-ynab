@@ -7,6 +7,8 @@ const { STARLING_ACCESS_TOKEN, YNAB_ACCESS_TOKEN, YNAB_ACCOUNT_ID } = process.en
 
 const START_DATE = DateTime.local().minus({ days: 14 }).toUTC().toISO()
 
+const ALLOWED_PAYMENT_STATUSES = ['UPCOMING', 'PENDING', 'SETTLED']
+
 const starling = new Starling({
   accessToken: STARLING_ACCESS_TOKEN
 })
@@ -73,21 +75,23 @@ async function getBudget (): Promise<BudgetSummary> {
 }
 
 function formatFeedItemsAsTransactions (feedItems: Array<FeedItem>) : SaveTransaction[] {
-  const transactions = feedItems.filter(feedItem => feedItem.amount.minorUnits > 0).map((feedItem: FeedItem) : SaveTransaction => ({
-    account_id: YNAB_ACCOUNT_ID,
-    date: feedItem.transactionTime,
-    amount: new BigNumber(feedItem.amount.minorUnits)
-              .times(10)
-              .times(feedItem.direction === 'OUT' ? -1 : 1)
-              .toNumber(),
-    payee_name: feedItem.counterPartyName,
-    category_id: null,
-    memo: feedItem.reference,
-    cleared: feedItem.status === 'SETTLED' ? SaveTransaction.ClearedEnum.Cleared : SaveTransaction.ClearedEnum.Uncleared,
-    approved: true,
-    flag_color: null,
-    import_id: feedItem.feedItemUid,
-  }))
+  const transactions = feedItems
+      .filter(feedItem => feedItem.amount.minorUnits > 0 && ALLOWED_PAYMENT_STATUSES.includes(feedItem.status))
+      .map((feedItem: FeedItem) : SaveTransaction => ({
+        account_id: YNAB_ACCOUNT_ID,
+        date: feedItem.transactionTime,
+        amount: new BigNumber(feedItem.amount.minorUnits)
+                  .times(10)
+                  .times(feedItem.direction === 'OUT' ? -1 : 1)
+                  .toNumber(),
+        payee_name: feedItem.counterPartyName,
+        category_id: null,
+        memo: feedItem.reference,
+        cleared: feedItem.status === 'SETTLED' ? SaveTransaction.ClearedEnum.Cleared : SaveTransaction.ClearedEnum.Uncleared,
+        approved: true,
+        flag_color: null,
+        import_id: feedItem.feedItemUid,
+      }))
 
   return transactions
 }
