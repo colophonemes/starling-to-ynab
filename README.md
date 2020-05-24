@@ -4,6 +4,8 @@ Auto-import your [Starling Bank](https://www.starlingbank.com/) transactions int
 
 Can be deployed as a Google Cloud Function to run automatically.
 
+Based on [node-typescript-boilerplate](https://github.com/jsynowiec/node-typescript-boilerplate)
+
 ## Features
 - Auto import all transactions from Starling to YNAB
 - Updates cleared transactions with real transaction value to avoid currency conversion discrepancies
@@ -30,12 +32,32 @@ Set environment variables in `.env.yml`:
 
 ## Google Cloud Deploy
 
+Ensure you have the `gcloud` CLI tool [installed and initialised with your Google Developer account credentials](https://cloud.google.com/sdk/docs/downloads-interactive).
+
+Start by creating a new project with ID `starling-to-ynab` (if you used a different name, you'll have to edit the value of `config.gcp_project` in `package.json`).
+
+### Deploy the cloud function
 ```
 yarn deploy
 ```
 
-This creates a project called `starling-to-ynab`,
+### Create a scheduled task to trigger the function
 
-Project/function names can be customised by editing the `config` key in `package.json`.
+In your GCP project, create a new `Cloud Scheduler` job, with the following attributes:
 
-Based on [node-typescript-boilerplate](https://github.com/jsynowiec/node-typescript-boilerplate)
+- ID can be anything you want, I used `starling-to-ynab-default-trigger`
+- Frequency: `*/10 * * * *` ([every 10 minutes](https://crontab.guru/#*/10_*_*_*_*))
+- Timezone: _Your timezone_ (this doesn't really matter)
+- Target: `Pub/Sub`
+- Topic: `starling-to-ynab-default`
+- Payload: `{}`
+
+Test the function by clicking `Run Now`. Return to the Cloud Function dashboard, click on the `starlingToYnab` function, and click `View Logs`. You should see output like the following:
+
+```
+Importing Starling transactions from 2020-05-10T12:55:19.969Z to YNAB budget <YOUR_YNAB_BUDGET_ID>
+Skipped 26 transactions already imported
+Imported 0 transactions
+```
+
+All set! New transactions should now be imported/updated automatically every 10 minutes.
