@@ -30,12 +30,13 @@
     "typescript": "~3.7.4"
   },
   "scripts": {
-    "start": "node -r dotenv/config ./build/src/run",
+    "start": "node -r dotenv-yaml/config ./build/src/run",
     "clean": "rimraf coverage build tmp",
-    "deploy": "gcloud functions deploy $npm_package_config_function_name --env-vars-file .env.yaml --runtime $npm_package_config_runtime --region=$npm_package_config_region --trigger-topic $npm_package_config_topic --project $npm_package_config_gcp_project",
+    "deploy": "gcloud functions deploy $npm_package_config_function_name --env-vars-file .env.yml --runtime $npm_package_config_runtime --region=$npm_package_config_region --trigger-topic $npm_package_config_topic --project $npm_package_config_gcp_project",
     "build": "tsc -p tsconfig.release.json",
     "build:watch": "tsc -w -p tsconfig.release.json",
     "lint": "eslint . --ext .ts,.tsx",
+    "init:env": "cp env-example.yml .env.yml",
     "test": "jest --coverage",
     "test:watch": "jest --watch"
   },
@@ -44,6 +45,7 @@
   "dependencies": {
     "bignumber.js": "^9.0.0",
     "dotenv": "^8.2.0",
+    "dotenv-yaml": "^0.1.4",
     "luxon": "^1.21.3",
     "starling-developer-sdk": "^1.0.0",
     "tslib": "~1.10.0",
