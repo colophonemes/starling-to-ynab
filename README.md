@@ -17,9 +17,8 @@ Other solutions for this exist, including `[fintech-to-ynab](https://github.com/
 
 ## Setup
 
-Setup your environment
-
 ```sh
+yarn install # install dependencies
 yarn init:env # Create .env.yml
 ```
 
@@ -29,6 +28,18 @@ Set environment variables in `.env.yml`:
 - `YNAB_ACCESS_TOKEN`: Access token from your [YNAB account](https://app.youneedabudget.com/settings/developer) (*Account Settings* -> *Developer Settings* -> *New Token*)
 - `YNAB_BUDGET_ID`: UUID for your YNAB budget (navigate to your budget in YNAB, get ID from URL: `https://app.youneedabudget.com/<YNAB_BUDGET_ID>`)
 - `YNAB_ACCOUNT_ID`: UUID for your Starling Bank account as set up in YNAB (navigate to your Starling account in YNAB, get ID from URL: `https://app.youneedabudget.com/<YNAB_BUDGET_ID>/accounts<YNAB_ACCOUNT_ID>`)
+
+## Usage
+
+```sh
+yarn start
+```
+
+By default the script imports transactions from the last two weeks. If you want to import a different date range (e.g. importing transactions from the date you opened the account), you can supply a `START_DATE` environment variable as an ISO-formatted date string, and the script will import from that date:
+
+```sh
+START_DATE=2019-01-01 yarn start # import all transactions from 2019-01-01
+```
 
 ## Google Cloud Deploy
 
