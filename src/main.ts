@@ -3,7 +3,7 @@ import { DateTime } from 'luxon'
 import * as Ynab from 'ynab'
 import { BudgetSummary, SaveTransaction, SaveTransactionsWrapper, TransactionResponse, SaveTransactionWrapper, TransactionDetail } from 'ynab'
 import BigNumber from 'bignumber.js'
-const { STARLING_ACCESS_TOKEN, YNAB_ACCESS_TOKEN, YNAB_ACCOUNT_ID } = process.env
+const { STARLING_ACCESS_TOKEN, YNAB_ACCESS_TOKEN, YNAB_ACCOUNT_ID, YNAB_BUDGET_ID } = process.env
 
 const START_DATE = DateTime.local().minus({ days: 14 }).toUTC().toISO()
 
@@ -69,11 +69,6 @@ async function getFeedItems({ accountUid, categoryUid, changesSince }: GetFeedAr
   return feed.data.feedItems
 }
 
-async function getBudget (): Promise<BudgetSummary> {
-  const { data: { budgets } } = await ynab.budgets.getBudgets()
-  return budgets[0]
-}
-
 function formatFeedItemsAsTransactions (feedItems: Array<FeedItem>) : SaveTransaction[] {
   const transactions = feedItems
       .filter(feedItem => feedItem.amount.minorUnits > 0 && ALLOWED_PAYMENT_STATUSES.includes(feedItem.status))
@@ -84,7 +79,7 @@ function formatFeedItemsAsTransactions (feedItems: Array<FeedItem>) : SaveTransa
                   .times(10)
                   .times(feedItem.direction === 'OUT' ? -1 : 1)
                   .toNumber(),
-        payee_name: feedItem.counterPartyName,
+        payee_name: feedItem.counterPartyName.replace(/^Transfer( : )?/, ''), // 'Transfer' is a reserved word in YNAB and payee names starting with it throw an error
         category_id: null,
         memo: feedItem.reference,
         cleared: feedItem.status === 'SETTLED' ? SaveTransaction.ClearedEnum.Cleared : SaveTransaction.ClearedEnum.Uncleared,
@@ -137,7 +132,6 @@ async function insertNewTransactions (budgetId: string, transactions: Ynab.SaveT
 
 async function updateExistingTransactions(budgetId: string, transactions: Ynab.UpdateTransaction[]): Promise<Ynab.SaveTransactionsResponseData> {
   const { data } = await ynab.transactions.updateTransactions(budgetId, { transactions })
-  console.log(data)
   console.log(`Updated ${data.transaction_ids.length} transactions`)
   return data
 }
@@ -151,14 +145,15 @@ async function starlingToYnab (): Promise<void> {
       categoryUid: account.defaultCategory,
       changesSince: START_DATE
     })
-    const budget = await getBudget()
+    const budgetId = YNAB_BUDGET_ID
+    console.log(`Importing to YNAB budget ${budgetId}`)
     const formattedTransactions = formatFeedItemsAsTransactions(feedItems)
     // insert new transactions
-    await insertNewTransactions(budget.id, formattedTransactions)
+    await insertNewTransactions(budgetId, formattedTransactions)
     // update existing transactions
-    const previousTransactions = await getPreviousUnclearedTransactions(budget.id)
+    const previousTransactions = await getPreviousUnclearedTransactions(budgetId)
     const updatedTransactions = getUpdatedTransactions(previousTransactions, formattedTransactions)
-    if (updatedTransactions.length) await updateExistingTransactions(budget.id, updatedTransactions)
+    if (updatedTransactions.length) await updateExistingTransactions(budgetId, updatedTransactions)
   } catch (err) {
     console.error(err)
   }

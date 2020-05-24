@@ -4,7 +4,14 @@
   "description": "Minimalistic boilerplate to quick-start Node.js development in TypeScript.",
   "main": "./build/src/main.js",
   "engines": {
-    "node": ">= 12.13 <13"
+    "node": ">= 10 <13"
+  },
+  "config": {
+    "function_name": "starlingToYnab",
+    "region": "us-central1",
+    "gcp_project": "starling-to-ynab",
+    "runtime": "nodejs10",
+    "topic": "starling-to-ynab-default"
   },
   "devDependencies": {
     "@types/jest": "~24.0.25",
@@ -25,6 +32,7 @@
   "scripts": {
     "start": "node -r dotenv/config ./build/src/run",
     "clean": "rimraf coverage build tmp",
+    "deploy": "gcloud functions deploy $npm_package_config_function_name --env-vars-file .env.yaml --runtime $npm_package_config_runtime --region=$npm_package_config_region --trigger-topic $npm_package_config_topic --project $npm_package_config_gcp_project",
     "build": "tsc -p tsconfig.release.json",
     "build:watch": "tsc -w -p tsconfig.release.json",
     "lint": "eslint . --ext .ts,.tsx",
