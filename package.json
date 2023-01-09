@@ -46,7 +46,7 @@
     "bignumber.js": "^9.0.0",
     "dotenv": "^8.2.0",
     "dotenv-yaml": "^0.1.4",
-    "luxon": "^1.21.3",
+    "luxon": "^2.5.2",
     "starling-developer-sdk": "^1.0.0",
     "tslib": "~1.10.0",
     "ynab": "^1.17.0"
